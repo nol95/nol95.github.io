@@ -1,0 +1,7 @@
+---
+title: "About"
+---
+
+My name is Nolan Dowling. I'm from Riverside, Illinois, a suburb of Chicago. In my free time, I like to play listen to music, play video games with friends, and draw.
+
+<img src="images/thumbsUp.jpg" alt="ThumbsUp" width="400" height="300"/>
