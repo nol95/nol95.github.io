@@ -1,0 +1,29 @@
+---
+title: "Definitely the coolest and most useful website in recent years"
+about:
+  id: intro-heading
+  template: trestles
+  image: images/Nolan Dowling.jpg
+  image-shape: round
+  links:
+    - icon: envelope
+      href: mailto:dowlin1@stolaf.edu
+    - icon: github
+      href: https://github.com/nol95
+editor_options: 
+  chunk_output_type: console
+---
+
+::: {#intro-heading}
+## Nolan Dowling
+
+Player of Fortnite
+
+### Education
+
+BA in Computer Science and Mathematics<br> 2024 \| [St. Olaf College](https://wp.stolaf.edu/)
+:::
+
+### Contact Me
+
+**Email**: <a href='mailto:dowlin1@stolaf.edu'>dowlin1\@stolaf.edu</a>
