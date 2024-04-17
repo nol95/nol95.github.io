@@ -1,0 +1,151 @@
+---
+title: "Mini Project #3: New Year's Resolutions"
+sidebar: false
+format:
+  html: default
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, echo=FALSE, results='hide', error=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tibble)
+library(tidyr)
+library(forcats)
+```
+
+This project uses regular expressions to perform sentiment analysis on a sample of 5,002 New Year's Resolution tweets from the following [source](https://data.world/crowdflower/2015-new-years-resolutions).
+
+```{r, results='hide', error=FALSE, warning=FALSE, message=FALSE}
+New_years_resolutions_DFE <- read.csv("C:/Users/Nolan/OneDrive/Documents/Data Science 2/New-years-resolutions-DFE.csv")
+```
+
+To prepare the data, we start by removing the sentiment analysis already completed. We want to ignore the topics that the creator of the dataset has made, so I will drop those columns, and instead only care about the actual Tweets and the data surrounding the creators of the Tweets.
+
+```{r}
+new_years <- New_years_resolutions_DFE |>
+  select(-other_topic, -resolution_topics, -Resolution_Category)
+new_years$text <- iconv(new_years$text, "UTF-8", "ASCII", sub = " ")
+
+```
+
+A common occurrence in New Year's Resolutions is for somebody to end one of their bad habits. To do this, we take the cleaned data and sort it for words "don't", "not", and "stop". Then we put the counts of these words and graph the proportions of tweets with these words.
+
+```{r, warning=FALSE}
+all_tweets <- paste(new_years$text, collapse = " ")
+
+matches <- str_extract_all(all_tweets, "\\b(avoid|quit|give up|not|don't|stop|less)\\b")
+
+all_matches <- unlist(matches)
+
+word_counts <- table(all_matches)
+
+word_counts_tbl <- as.tibble(word_counts)
+colnames(word_counts_tbl) <- c("Word", "Frequency")
+
+word_counts_tbl$Word <- fct_reorder(word_counts_tbl$Word, word_counts_tbl$Frequency)
+
+ggplot(word_counts_tbl, aes(x = Word, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "red", color = "white") +
+  labs(title = "Frequency of negative terms",
+       x = "Word",
+       y = "Frequency") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none",
+        panel.background = element_rect(fill = 'black', color = 'black'),
+        plot.background = element_rect(fill = 'black', color = 'black'),
+        text = element_text(color = 'lightgray'),
+        axis.text = element_text(color = 'lightgray'))
+```
+
+We can see here that a large proportion of the Tweets made included these negative words. What if we search for the opposite, where people are trying to start up a healthy habit, or try something new? Let's search for the words "start", "try", and "begin".
+
+```{r}
+matches <- str_extract_all(all_tweets, "\\b(grow|improve|develop|expand|start|try|begin|learn|keep)\\b")
+
+all_matches <- unlist(matches)
+
+word_counts <- table(all_matches)
+
+word_counts_tbl <- as.tibble(word_counts)
+colnames(word_counts_tbl) <- c("Word", "Frequency")
+
+word_counts_tbl$Word <- fct_reorder(word_counts_tbl$Word, word_counts_tbl$Frequency)
+
+ggplot(word_counts_tbl, aes(x = Word, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "blue", color = "white") +
+  labs(title = "Frequency of positive terms",
+       x = "Word",
+       y = "Frequency") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none",
+        panel.background = element_rect(fill = 'black', color = 'black'),
+        plot.background = element_rect(fill = 'black', color = 'black'),
+        text = element_text(color = 'lightgray'),
+        axis.text = element_text(color = 'lightgray'))
+```
+
+The dataset also includes which region the Tweet was made from. We can organize the total positive and negative terms, and display the counts of these terms among the regions.
+
+```{r}
+region_counts <- new_years |>
+  mutate(
+    region = str_to_title(tolower(tweet_region))
+  ) |>
+  group_by(region) |>
+  summarise(
+    negative_terms = sum(str_count(tolower(text), "\\b(avoid|quit|give up|not|don't|stop)\\b")),
+    positive_terms = sum(str_count(tolower(text), "\\b(grow|improve|develop|expand|start|try|begin|learn|keep)\\b"))
+  )
+
+region_counts_long <- pivot_longer(region_counts, cols = c(negative_terms, positive_terms), names_to = "Term Type", values_to = "Frequency")
+
+ggplot(region_counts_long, aes(x = region, y = Frequency, fill = `Term Type`)) +
+  geom_bar(stat = "identity", position = "dodge", color = "white") +
+  labs(title = "Frequency of Positive/Negative Terms by Region",
+       x = "Region",
+       y = "Frequency",
+       fill = "Term Type") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.background = element_rect(fill = 'black', color = 'black'),
+        plot.background = element_rect(fill = 'black', color = 'black'),
+        text = element_text(color = 'lightgray'),
+        axis.text = element_text(color = 'lightgray')) +
+  scale_fill_manual(values = c("negative_terms" = "red", "positive_terms" = "blue"),
+                    labels = c("Negative terms", "Positive terms"))
+```
+
+We can also delve deeper into more specific terms, instead of just positive or negative. Here, we search for a variety of the most common resolution topics, such as "gym", "weight", "drinking", and "diet".
+
+```{r}
+matches <- str_extract_all(all_tweets, "\\b(gym|weight|drinking|alcohol|smoking|lazy|health|fitness|diet|active|job|guitar|travel|love|watch)\\b")
+
+all_matches <- unlist(matches)
+
+word_counts <- table(all_matches)
+
+word_counts_tbl <- as.tibble(word_counts)
+colnames(word_counts_tbl) <- c("Word", "Frequency")
+
+word_counts_tbl$Word <- fct_reorder(word_counts_tbl$Word, word_counts_tbl$Frequency)
+
+ggplot(word_counts_tbl, aes(x = Word, y = Frequency)) +
+  geom_bar(stat = "identity", fill = "blue", color = "white") +
+  labs(title = "Frequency of specific resolution terms",
+       x = "Word",
+       y = "Frequency") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none",
+        panel.background = element_rect(fill = 'black', color = 'black'),
+        plot.background = element_rect(fill = 'black', color = 'black'),
+        text = element_text(color = 'lightgray'),
+        axis.text = element_text(color = 'lightgray'))
+```
+
+In conclusion, we can see that more New Year's Resolutions consist of ending bad habits compared to starting new ones. Also, among the words pertaining to specific resolution topics, the most common words are "love", "gym", "smoking", and "weight".
